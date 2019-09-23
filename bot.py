@@ -12,6 +12,7 @@ logging.basicConfig(format='%(asctime)s - %(levelname)s - $(message)s',
                     level=logging.INFO, filename='bot.log')
 now = datetime.datetime.now()
 
+
 def greet_user(bot, update):
     text = 'Вызван /start'
     logging.info(text)
@@ -25,31 +26,34 @@ def greet_user(bot, update):
 
 
 def talk_to_me(bot, update):
-    user_text = update.message.text
+    user_text = update.message.text.split(" ")
     logging.info(
         f'User: {update.message.chat.username}, Chat id:' +
         f'{update.message.chat.id} Message: {update.message.text}')
-    if user_text == "/za300":
+    if user_text[0] == "/za300":
         update.message.reply_text(
             f"{bigdata.joke_data[random.randrange(1, int(len(bigdata.joke_data)-1), 1)]}")
-    if user_text == "/planet":
-        mars = ephem.Moon(f'{now.year}/{now.month}/{now.day}')
-        const = ephem.constellation(mars)
-        update.message.reply_text(f"{const}")
-        ('Aqr', 'Aquarius')
-
-
+    if user_text[0] == "/planet":
+        need_planet = user_text[1]
+        update.message.reply_text("Введите комманду типа: /planet Mars")
+        for _0, _1, name in ephem._libastro.builtin_planets():
+            if need_planet == name:
+                cuerpo = getattr(ephem, name)
+                const = ephem.constellation(cuerpo(f"{now.year}/{now.month}/{now.day}"))
+                update.message.reply_text(f"Есть такая планета {need_planet} и она сейчас в созвездии {const[1]}")
+                break
+            
 def main():
-    newBot = Updater(settings.api_key, request_kwargs=settings.PROXY)
+    newBot=Updater(settings.api_key, request_kwargs=settings.PROXY)
     logging.info('Бот запускается')
-
-    dp = newBot.dispatcher
+    dp=newBot.dispatcher
     dp.add_handler(CommandHandler('start', greet_user))
     dp.add_handler(MessageHandler(Filters.text, talk_to_me))
-    fuckfuck = CommandHandler('za300', talk_to_me)
+    bots_complite=CommandHandler('za300', talk_to_me)
     dp.add_handler(MessageHandler(Filters.text, talk_to_me))
-    fuckfuck = CommandHandler('planet', talk_to_me)
-    dp.add_handler(fuckfuck)
+    dp.add_handler(bots_complite)
+    planet_search=CommandHandler('planet', talk_to_me)
+    dp.add_handler(planet_search)
     newBot.start_polling()
     newBot.idle()
 
