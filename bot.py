@@ -34,25 +34,32 @@ def talk_to_me(bot, update):
         update.message.reply_text(
             f"{bigdata.joke_data[random.randrange(1, int(len(bigdata.joke_data)-1), 1)]}")
     if user_text[0] == "/planet":
-        need_planet = user_text[1]
-        update.message.reply_text("Введите комманду типа: /planet Mars")
-        for _0, _1, name in ephem._libastro.builtin_planets():
-            if need_planet == name:
-                cuerpo = getattr(ephem, name)
-                const = ephem.constellation(cuerpo(f"{now.year}/{now.month}/{now.day}"))
-                update.message.reply_text(f"Есть такая планета {need_planet} и она сейчас в созвездии {const[1]}")
-                break
-            
+        if len(user_text) == 1:
+            update.message.reply_text("Введите комманду типа: /planet Mars")
+        elif len(user_text) > 1:
+            need_planet = user_text[1]
+            for _0, _1, name in ephem._libastro.builtin_planets():
+
+                if need_planet == name:
+                    cuerpo = getattr(ephem, name)
+                    const = ephem.constellation(
+                        cuerpo(f"{now.year}/{now.month}/{now.day}"))
+                    update.message.reply_text(
+                        f"Есть такая планета {need_planet} и" +
+                        f" она сейчас в созвездии {const[1]}")
+                    break
+
+
 def main():
-    newBot=Updater(settings.api_key, request_kwargs=settings.PROXY)
+    newBot = Updater(settings.api_key, request_kwargs=settings.PROXY)
     logging.info('Бот запускается')
-    dp=newBot.dispatcher
+    dp = newBot.dispatcher
     dp.add_handler(CommandHandler('start', greet_user))
     dp.add_handler(MessageHandler(Filters.text, talk_to_me))
-    bots_complite=CommandHandler('za300', talk_to_me)
+    bots_complite = CommandHandler('za300', talk_to_me)
     dp.add_handler(MessageHandler(Filters.text, talk_to_me))
     dp.add_handler(bots_complite)
-    planet_search=CommandHandler('planet', talk_to_me)
+    planet_search = CommandHandler('planet', talk_to_me)
     dp.add_handler(planet_search)
     newBot.start_polling()
     newBot.idle()
