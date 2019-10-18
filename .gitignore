@@ -2,3 +2,9 @@
 settings.py
 __pycache__/
 env/
+*.db
+*.sqbpro
+*.sql
+__pycache__
+*.zip
+/__pycache__/

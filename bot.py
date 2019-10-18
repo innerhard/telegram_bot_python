@@ -6,23 +6,45 @@ import settings
 import bigdata
 import ephem
 import random
+import db_connector
+import sqlite3
+import sys
 
 see_no_evil = emojize(":see_no_evil:", use_aliases=True)
 logging.basicConfig(format='%(asctime)s - %(levelname)s - $(message)s',
                     level=logging.INFO, filename='bot.log')
 now = datetime.datetime.now()
+# Функция проверки id user возвращает либо boolean
+
+
+def verificate_User(x):
+    status_Verif = False
+    con = None
+    con = sqlite3.connect('c:/projects/ultrabot/db_current_user.db')
+    cursor = con.cursor()
+    cursor.execute("SELECT * FROM Users")
+    results = cursor.fetchall()
+    for user_info in results:
+        if str(x) == str(user_info[6]):
+            status_Verif = True
+        return status_Verif
+    con.close()
 
 
 def greet_user(bot, update):
     text = 'Вызван /start'
     logging.info(text)
-
-    update.message.reply_text(
-        f'Привет  {update.message.chat.first_name}, Я бот \n' +
-        f'я умею выполнять команды:')
-    for arr_to_str in bigdata.bot_set_config:
+    user_id = update.message.chat.id
+    result_verif_user = verificate_User(user_id)
+    if verificate_User(user_id) == True:
         update.message.reply_text(
-            f'{arr_to_str} - {bigdata.bot_set_config[arr_to_str]}')
+            f'Доступ разрешен {result_verif_user} у тебя есть дополнительные команды для управления группой')
+        for arr_to_str in bigdata.bot_set_config:
+            update.message.reply_text(
+                f'{arr_to_str} - {bigdata.bot_set_config[arr_to_str]}')
+    else:
+        update.message.reply_text(
+            f'Доступ Запрещён {result_verif_user}')
 
 
 def talk_to_me(bot, update):
@@ -55,7 +77,6 @@ def main():
     logging.info('Бот запускается')
     dp = newBot.dispatcher
     dp.add_handler(CommandHandler('start', greet_user))
-    dp.add_handler(MessageHandler(Filters.text, talk_to_me))
     bots_complite = CommandHandler('za300', talk_to_me)
     dp.add_handler(MessageHandler(Filters.text, talk_to_me))
     dp.add_handler(bots_complite)
