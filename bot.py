@@ -6,7 +6,6 @@ import settings
 import bigdata
 import ephem
 import random
-import db_connector
 import sqlite3
 import sys
 
@@ -38,13 +37,13 @@ def greet_user(bot, update):
     result_verif_user = verificate_User(user_id)
     if verificate_User(user_id) == True:
         update.message.reply_text(
-            f'Доступ разрешен {result_verif_user} у тебя есть дополнительные команды для управления группой')
+            f'Доступ разрешен {update.message.chat.username} у тебя есть дополнительные команды для управления группой')
         for arr_to_str in bigdata.bot_set_config:
             update.message.reply_text(
                 f'{arr_to_str} - {bigdata.bot_set_config[arr_to_str]}')
     else:
         update.message.reply_text(
-            f'Доступ Запрещён {result_verif_user}')
+            f'Доступ Запрещён {update.message.chat.username} но если ты зарегистрирован напиши /SignIn Почта Пароль')
 
 
 def talk_to_me(bot, update):
