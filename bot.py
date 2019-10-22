@@ -16,7 +16,7 @@ now = datetime.datetime.now()
 # Функция проверки id user возвращает либо boolean
 
 
-def verificate_User(x):
+def verificate_User(id_user):
     status_Verif = False
     con = None
     con = sqlite3.connect('c:/projects/ultrabot/db_current_user.db')
@@ -24,10 +24,25 @@ def verificate_User(x):
     cursor.execute("SELECT * FROM Users")
     results = cursor.fetchall()
     for user_info in results:
-        if str(x) == str(user_info[6]):
+        if str(id_user) == str(user_info[6]):
             status_Verif = True
         return status_Verif
     con.close()
+
+
+
+# Возможность регистрировать пользователя
+
+
+def register_User(enter_email_user, password_user, user_id):
+    conn = sqlite3.connect('c:/projects/ultrabot/db_current_user.db')
+    cursor = conn.cursor()
+    sql = f"""UPDATE Users SET User_Id_Telegram = '{user_id}' WHERE User_Email = '{enter_email_user}'"""
+    cursor.execute(sql)
+    conn.commit()
+    conn.close()
+
+# Запуск бота
 
 
 def greet_user(bot, update):
@@ -43,7 +58,7 @@ def greet_user(bot, update):
                 f'{arr_to_str} - {bigdata.bot_set_config[arr_to_str]}')
     else:
         update.message.reply_text(
-            f'Доступ Запрещён {update.message.chat.username} но если ты зарегистрирован напиши /SignIn Почта Пароль')
+            f'Доступ запрещён {update.message.chat.username} введи команду /signin email пароль чтобы зарегистрировать свой id телеграмма')
 
 
 def talk_to_me(bot, update):
@@ -51,6 +66,9 @@ def talk_to_me(bot, update):
     logging.info(
         f'User: {update.message.chat.username}, Chat id:' +
         f'{update.message.chat.id} Message: {update.message.text}')
+    user_id = update.message.chat.id
+    if user_text[0] == "/signin":
+        register_User(user_text[1],user_text[2], user_id)        
     if user_text[0] == "/za300":
         update.message.reply_text(
             f"{bigdata.joke_data[random.randrange(1, int(len(bigdata.joke_data)-1), 1)]}")
@@ -77,8 +95,10 @@ def main():
     dp = newBot.dispatcher
     dp.add_handler(CommandHandler('start', greet_user))
     bots_complite = CommandHandler('za300', talk_to_me)
+    sign_in = bots_complite = CommandHandler('signin', talk_to_me)
     dp.add_handler(MessageHandler(Filters.text, talk_to_me))
     dp.add_handler(bots_complite)
+    dp.add_handler(sign_in)
     planet_search = CommandHandler('planet', talk_to_me)
     dp.add_handler(planet_search)
     newBot.start_polling()
