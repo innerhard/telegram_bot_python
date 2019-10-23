@@ -24,7 +24,7 @@ def get_Week_Lessons(number_week, status_verif, update):
     if number_week != "all" and status_verif == True:
         cursor.execute(f"SELECT * FROM Lessons WHERE ID_Week = {number_week}")
         update.message.reply_text(f"Материалы недели {number_week}")
-    else:
+    elif number_week =="all" and status_verif == True:
         cursor.execute(f"SELECT * FROM Lessons")
         update.message.reply_text(f"Весь план обучения")
     results = cursor.fetchall()
