@@ -13,7 +13,34 @@ see_no_evil = emojize(":see_no_evil:", use_aliases=True)
 logging.basicConfig(format='%(asctime)s - %(levelname)s - $(message)s',
                     level=logging.INFO, filename='bot.log')
 now = datetime.datetime.now()
+
+# Вывод заданий по неделям
+
+
+def get_Week_Lessons(number_week, status_verif, update):
+    con = None
+    con = sqlite3.connect('c:/projects/ultrabot/db_current_user.db')
+    cursor = con.cursor()
+    if number_week != "all" and status_verif == True:
+        cursor.execute(f"SELECT * FROM Lessons WHERE ID_Week = {number_week}")
+        update.message.reply_text(f"Материалы недели {number_week}")
+    else:
+        cursor.execute(f"SELECT * FROM Lessons")
+        update.message.reply_text(f"Весь план обучения")
+    results = cursor.fetchall()
+
+    for user_info in results:
+        update.message.reply_text(
+            f"{user_info[2]} {user_info[3]} {user_info[4]}")
+    con.close()
 # Функция проверки id user возвращает либо boolean
+
+
+def push_Week_Lessons(bot, update):
+    user_text = update.message.text.split(" ")
+    user_id = update.message.chat.id
+    result_verif_user = verificate_User(user_id)
+    get_Week_Lessons(user_text[1],result_verif_user, update)
 
 
 def verificate_User(id_user):
@@ -28,7 +55,6 @@ def verificate_User(id_user):
             status_Verif = True
         return status_Verif
     con.close()
-
 
 
 # Возможность регистрировать пользователя
@@ -60,6 +86,8 @@ def greet_user(bot, update):
         update.message.reply_text(
             f'Доступ запрещён {update.message.chat.username} введи команду /signin email пароль чтобы зарегистрировать свой id телеграмма')
 
+# Функция вхождения запросов
+
 
 def talk_to_me(bot, update):
     user_text = update.message.text.split(" ")
@@ -68,7 +96,7 @@ def talk_to_me(bot, update):
         f'{update.message.chat.id} Message: {update.message.text}')
     user_id = update.message.chat.id
     if user_text[0] == "/signin":
-        register_User(user_text[1],user_text[2], user_id)        
+        register_User(user_text[1], user_text[2], user_id)
     if user_text[0] == "/za300":
         update.message.reply_text(
             f"{bigdata.joke_data[random.randrange(1, int(len(bigdata.joke_data)-1), 1)]}")
@@ -91,15 +119,19 @@ def talk_to_me(bot, update):
 
 def main():
     newBot = Updater(settings.api_key, request_kwargs=settings.PROXY)
+
     logging.info('Бот запускается')
+
     dp = newBot.dispatcher
     dp.add_handler(CommandHandler('start', greet_user))
+    week_lessons = CommandHandler('week', push_Week_Lessons)
     bots_complite = CommandHandler('za300', talk_to_me)
-    sign_in = bots_complite = CommandHandler('signin', talk_to_me)
+    sign_in = CommandHandler('signin', talk_to_me)
+    planet_search = CommandHandler('planet', talk_to_me)
     dp.add_handler(MessageHandler(Filters.text, talk_to_me))
     dp.add_handler(bots_complite)
     dp.add_handler(sign_in)
-    planet_search = CommandHandler('planet', talk_to_me)
+    dp.add_handler(week_lessons)
     dp.add_handler(planet_search)
     newBot.start_polling()
     newBot.idle()
