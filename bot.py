@@ -7,7 +7,6 @@ import bigdata
 import ephem
 import random
 import sqlite3
-import sys
 
 see_no_evil = emojize(":see_no_evil:", use_aliases=True)
 logging.basicConfig(format='%(asctime)s - %(levelname)s - $(message)s',
@@ -21,26 +20,34 @@ def get_Week_Lessons(number_week, status_verif, update):
     con = None
     con = sqlite3.connect('c:/projects/ultrabot/db_current_user.db')
     cursor = con.cursor()
-    if number_week != "all" and status_verif == True:
-        cursor.execute(f"SELECT * FROM Lessons WHERE ID_Week = {number_week}")
-        update.message.reply_text(f"Материалы недели {number_week}")
-    elif number_week =="all" and status_verif == True:
-        cursor.execute(f"SELECT * FROM Lessons")
-        update.message.reply_text(f"Весь план обучения")
-    results = cursor.fetchall()
 
-    for user_info in results:
+    if status_verif is True:
+        if number_week != "all":
+            cursor.execute(
+                f"SELECT * FROM Lessons WHERE ID_Week = {number_week}")
+            update.message.reply_text(f"Материалы недели {number_week}")
+        elif number_week == "all":
+            cursor.execute(f"SELECT * FROM Lessons")
+            update.message.reply_text(f"Весь план обучения")
+        results = cursor.fetchall()
+        for user_info in results:
+            update.message.reply_text(
+                f"{user_info[2]} {user_info[3]} {user_info[4]}")
+    else:
         update.message.reply_text(
-            f"{user_info[2]} {user_info[3]} {user_info[4]}")
+            f"У вас нет доступа! Зарегистрируйтесь /signin почта пароль")
+
     con.close()
-# Функция проверки id user возвращает либо boolean
 
 
+# Функция отправки уроков
 def push_Week_Lessons(bot, update):
     user_text = update.message.text.split(" ")
     user_id = update.message.chat.id
     result_verif_user = verificate_User(user_id)
-    get_Week_Lessons(user_text[1],result_verif_user, update)
+    get_Week_Lessons(user_text[1], result_verif_user, update)
+
+# Функция проверки id user возвращает либо boolean
 
 
 def verificate_User(id_user):
@@ -56,14 +63,14 @@ def verificate_User(id_user):
         return status_Verif
     con.close()
 
-
 # Возможность регистрировать пользователя
 
 
 def register_User(enter_email_user, password_user, user_id):
     conn = sqlite3.connect('c:/projects/ultrabot/db_current_user.db')
     cursor = conn.cursor()
-    sql = f"""UPDATE Users SET User_Id_Telegram = '{user_id}' WHERE User_Email = '{enter_email_user}'"""
+    sql = f"""UPDATE Users SET User_Id_Telegram
+    = '{user_id}' WHERE User_Email = '{enter_email_user}'"""
     cursor.execute(sql)
     conn.commit()
     conn.close()
@@ -75,16 +82,18 @@ def greet_user(bot, update):
     text = 'Вызван /start'
     logging.info(text)
     user_id = update.message.chat.id
-    result_verif_user = verificate_User(user_id)
-    if verificate_User(user_id) == True:
+
+    if verificate_User(user_id) is True:
         update.message.reply_text(
-            f'Доступ разрешен {update.message.chat.username} у тебя есть дополнительные команды для управления группой')
+            f'Доступ разрешен {update.message.chat.username} у тебя есть'
+            'дополнительные команды для управления группой')
         for arr_to_str in bigdata.bot_set_config:
             update.message.reply_text(
                 f'{arr_to_str} - {bigdata.bot_set_config[arr_to_str]}')
-    else:
+    elif verificate_User(user_id) is False:
         update.message.reply_text(
-            f'Доступ запрещён {update.message.chat.username} введи команду /signin email пароль чтобы зарегистрировать свой id телеграмма')
+            f'Доступ запрещён {update.message.chat.username} введи команду /'
+            'signin email пароль чтобы зарегистрировать свой id телеграмма')
 
 # Функция вхождения запросов
 
@@ -98,8 +107,9 @@ def talk_to_me(bot, update):
     if user_text[0] == "/signin":
         register_User(user_text[1], user_text[2], user_id)
     if user_text[0] == "/za300":
-        update.message.reply_text(
-            f"{bigdata.joke_data[random.randrange(1, int(len(bigdata.joke_data)-1), 1)]}")
+        message_user = bigdata.joke_data[random.randrange(1,
+                                                          int(len(bigdata.joke_data)-1), 1)]
+        update.message.reply_text(f"{message_user}")
     if user_text[0] == "/planet":
         if len(user_text) == 1:
             update.message.reply_text("Введите комманду типа: /planet Mars")
