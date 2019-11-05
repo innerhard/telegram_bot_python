@@ -12,37 +12,31 @@ see_no_evil = emojize(":see_no_evil:", use_aliases=True)
 logging.basicConfig(format='%(asctime)s - %(levelname)s - $(message)s',
                     level=logging.INFO, filename='bot.log')
 now = datetime.datetime.now()
-
 # Вывод заданий по неделям
 
 
-def get_Faq(bot, update):
+def get_faq(bot, update):
     user_text = update.message.text.split(" ")
     user_id = update.message.chat.id
-    con = None
-    con = sqlite3.connect('c:/projects/ultrabot/db_current_user.db')
-    cursor = con.cursor()
-    if verificate_User(user_id) is True and len(user_text) > 1:
+    cursor = con_db.cursor()
+    if verificate_user(user_id) is True and len(user_text) > 1:
         cursor.execute(
             f"SELECT * FROM Library_Data WHERE Name = '{user_text[1]}'")
         results = cursor.fetchall()
         for user_info in results:
             update.message.reply_text(
                 f"{user_info[1]} {user_info[2]} {user_info[3]}")
-    elif verificate_User(user_id) is True and len(user_text) == 1:
+    elif verificate_user(user_id) is True and len(user_text) == 1:
         cursor.execute(
             f"SELECT * FROM Library_Data")
         results = cursor.fetchall()
         for user_info in results:
             update.message.reply_text(
                 f"Доступные темы для просмотра напиши /faq {user_info[1]}")
-    con.close()
 
 
-def get_Week_Lessons(number_week, status_verif, update):
-    con = None
-    con = sqlite3.connect('c:/projects/ultrabot/db_current_user.db')
-    cursor = con.cursor()
+def get_week_lessons(number_week, status_verif, update):
+    cursor = con_db.cursor()
 
     if status_verif is True:
         if number_week != "all":
@@ -60,43 +54,37 @@ def get_Week_Lessons(number_week, status_verif, update):
         update.message.reply_text(
             f"У вас нет доступа! Зарегистрируйтесь /signin почта пароль")
 
-    con.close()
-
 
 # Функция отправки уроков
-def push_Week_Lessons(bot, update):
+def push_week_lessons(bot, update):
     user_text = update.message.text.split(" ")
     user_id = update.message.chat.id
-    result_verif_user = verificate_User(user_id)
-    get_Week_Lessons(user_text[1], result_verif_user, update)
+    result_verif_user = verificate_user(user_id)
+    get_week_lessons(user_text[1], result_verif_user, update)
 
 # Функция проверки id user возвращает либо boolean
 
 
-def verificate_User(id_user):
+def verificate_user(id_user):
     status_Verif = False
-    con = None
-    con = sqlite3.connect('c:/projects/ultrabot/db_current_user.db')
-    cursor = con.cursor()
+    cursor = con_db.cursor()
     cursor.execute("SELECT * FROM Users")
     results = cursor.fetchall()
     for user_info in results:
         if str(id_user) == str(user_info[6]):
             status_Verif = True
         return status_Verif
-    con.close()
+
 
 # Возможность регистрировать пользователя
 
 
-def register_User(enter_email_user, password_user, user_id):
-    conn = sqlite3.connect('c:/projects/ultrabot/db_current_user.db')
-    cursor = conn.cursor()
+def register_user(enter_email_user, password_user, user_id):
+    cursor = con_db.cursor()
     sql = f"""UPDATE Users SET User_Id_Telegram
     = '{user_id}' WHERE User_Email = '{enter_email_user}'"""
     cursor.execute(sql)
-    conn.commit()
-    conn.close()
+    con_db.commit()
 
 # Запуск бота
 
@@ -105,15 +93,16 @@ def greet_user(bot, update):
     text = 'Вызван /start'
     logging.info(text)
     user_id = update.message.chat.id
-
-    if verificate_User(user_id) is True:
+    global con_db
+    con_db = sqlite3.connect('c:/projects/ultrabot/db_current_user.db')
+    if verificate_user(user_id) is True:
         update.message.reply_text(
             f'Доступ разрешен {update.message.chat.username} у тебя есть'
             ' дополнительные команды для управления группой')
         for arr_to_str in bigdata.bot_set_config:
             update.message.reply_text(
                 f'{arr_to_str} - {bigdata.bot_set_config[arr_to_str]}')
-    elif verificate_User(user_id) is False:
+    elif verificate_user(user_id) is False:
         update.message.reply_text(
             f'Доступ запрещён {update.message.chat.username} введи команду /'
             'signin email пароль чтобы зарегистрировать свой id телеграмма')
@@ -128,7 +117,7 @@ def talk_to_me(bot, update):
         f'{update.message.chat.id} Message: {update.message.text}')
     user_id = update.message.chat.id
     if user_text[0] == "/signin":
-        register_User(user_text[1], user_text[2], user_id)
+        register_user(user_text[1], user_text[2], user_id)
     if user_text[0] == "/za300":
         message_user = bigdata.joke_data[random.randrange(1,
                                                           int(len(bigdata.joke_data)-1), 1)]
@@ -152,13 +141,11 @@ def talk_to_me(bot, update):
 
 def main():
     newBot = Updater(settings.api_key, request_kwargs=settings.PROXY)
-
     logging.info('Бот запускается')
 
     dp = newBot.dispatcher
-
-    week_lessons = CommandHandler('week', push_Week_Lessons)
-    faq = CommandHandler('faq', get_Faq)
+    week_lessons = CommandHandler('week', push_week_lessons)
+    faq = CommandHandler('faq', get_faq)
     bots_complite = CommandHandler('za300', talk_to_me)
     sign_in = CommandHandler('signin', talk_to_me)
     planet_search = CommandHandler('planet', talk_to_me)
